@@ -1,14 +1,46 @@
 import os
-import socket
 import time
 from timeit import default_timer as timer
+import socket,cv2, pickle,struct
 
 import controller_util
 
+IP = socket.gethostname()
+PORT = 4450
+print(IP)
+def video_handler():
+    ADDR = (IP, PORT)
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # used IPV4 and TCP connection
+    server.bind(ADDR)
+    server.listen(3)
+    print("Waiting for connections")
+    client, address = server.accept()
+    print("New connection to", address)
+    data = b""
+    payload_size = struct.calcsize("Q")
+    while True:
+        while len(data) < payload_size:
+            packet = client.recv(4 * 1024)  # 4K
+            if not packet: break
+            data += packet
+        packed_msg_size = data[:payload_size]
+        data = data[payload_size:]
+        msg_size = struct.unpack("Q", packed_msg_size)[0]
+
+        while len(data) < msg_size:
+            data += client.recv(4 * 1024)
+        frame_data = data[:msg_size]
+        data = data[msg_size:]
+        frame = pickle.loads(frame_data)
+        cv2.imshow("RECEIVING VIDEO", frame)
+        key = cv2.waitKey(1) & 0xFF
+        if key == ord('q'):
+            break
+
+    client.close()
+
 
 def client_handler():
-    IP = "192.168.137.1"
-    PORT = 4450
     ADDR = (IP, PORT)
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # used IPV4 and TCP connection
     server.bind(ADDR)
@@ -37,4 +69,4 @@ def client_handler():
             print(check)
 
 
-client_handler()
+video_handler()
