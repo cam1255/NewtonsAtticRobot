@@ -36,7 +36,10 @@ https://www.atlassian.com/git/tutorials/syncing/git-push
 
 7. if you think your code should be added to the main code, go to https://github.com/cam1255/NewtownsAtticRobot and make a pull request. 
 Make sure you select the correct branches that you want to merge!
+at the top left drop down, "base:" should be main, and "compare:" should be your branch name
 
-8. Feel free to ask me any questions!
+8. Do not complete a pull request unless someone has fully reviewed your code!
+
+9. Feel free to ask me any questions!
 
 -Cameron
