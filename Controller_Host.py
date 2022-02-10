@@ -2,42 +2,39 @@ import os
 import time
 from timeit import default_timer as timer
 import socket,cv2, pickle,struct
-
+import subprocess
 import controller_util
 
 IP = socket.gethostname()
 PORT = 4450
 print(IP)
 def video_handler():
-    ADDR = (IP, PORT)
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # used IPV4 and TCP connection
-    server.bind(ADDR)
-    server.listen(3)
-    print("Waiting for connections")
-    client, address = server.accept()
-    print("New connection to", address)
-    data = b""
-    payload_size = struct.calcsize("Q")
-    while True:
-        while len(data) < payload_size:
-            packet = client.recv(4 * 1024)  # 4K
-            if not packet: break
-            data += packet
-        packed_msg_size = data[:payload_size]
-        data = data[payload_size:]
-        msg_size = struct.unpack("Q", packed_msg_size)[0]
 
-        while len(data) < msg_size:
-            data += client.recv(4 * 1024)
-        frame_data = data[:msg_size]
-        data = data[msg_size:]
-        frame = pickle.loads(frame_data)
-        cv2.imshow("RECEIVING VIDEO", frame)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            break
+    # Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
+    # all interfaces)
+    server_socket = socket.socket()
+    server_socket.bind(('0.0.0.0', 8000))
+    server_socket.listen(0)
 
-    client.close()
+    # Accept a single connection and make a file-like object out of it
+    connection = server_socket.accept()[0].makefile('rb')
+    try:
+        # Run a viewer with an appropriate command line. Uncomment the mplayer
+        # version if you would prefer to use mplayer instead of VLC
+        cmdline = ['vlc', '--demux', 'h264', '-']
+        #cmdline = ['mplayer', '-fps', '25', '-cache', '1024', '-']
+        player = subprocess.Popen(cmdline, stdin=subprocess.PIPE)
+        while True:
+            # Repeatedly read 1k of data from the connection and write it to
+            # the media player's stdin
+            data = connection.read(1024)
+            if not data:
+                break
+            player.stdin.write(data)
+    finally:
+        connection.close()
+        server_socket.close()
+        player.terminate()
 
 
 def client_handler():

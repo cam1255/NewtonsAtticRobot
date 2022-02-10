@@ -1,45 +1,36 @@
 import socket, pickle,struct
 import serial
 import numpy as np
-import cv2
-
-IP = "DESKTOP-PN6HHCE"
+from picamera import PiCamera
+import time
+IP = "192.168.254.71"
 PORT = 4450
 
 
 def test():
-    client = socket.socket()
-    ADDR = (IP, PORT)
 
-    connected = False
-    while True:
-        ADDR = (IP, PORT)
-        client.connect(ADDR)
-        print("Connected!")
-        connected = True
-        check_msg = bytes("Received", "utf-8")
+    # Connect a client socket to my_server:8000 (change my_server to the
+    # hostname of your server)
+    client_socket = socket.socket()
+    client_socket.connect(('my_server', 8000))
 
-        vid = cv2.VideoCapture(0)
-
-        while (vid.isOpened()):
-            img, frame = vid.read()
-            a = pickle.dumps(frame)
-            message = struct.pack("Q", len(a)) + a
-            client.sendall(message)
-
-            cv2.imshow('TRANSMITTING VIDEO', frame)
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('q'):
-                client.close()
-
-
-        # while True:
-        #     msg = client.recv(1024).decode()
-        #     print(msg)
-        #     client.send(check_msg)
-        #     msg = client.recv(1024).decode()
-        #     print(msg)
-        #     client.send(check_msg)
+    # Make a file-like object out of the connection
+    connection = client_socket.makefile('wb')
+    try:
+        with picamera.PiCamera() as camera:
+            camera.resolution = (640, 480)
+            camera.framerate = 24
+            # Start a preview and let the camera warm up for 2 seconds
+            camera.start_preview()
+            time.sleep(2)
+            # Start recording, sending the output to the connection for 60
+            # seconds, then stop
+            camera.start_recording(connection, format='h264')
+            camera.wait_recording(60)
+            camera.stop_recording()
+    finally:
+        connection.close()
+        client_socket.close()
 
 
 def main():
