@@ -13,7 +13,6 @@ def test():
     # hostname of your server)
     client = socket.socket()
     client.connect(ADDR)
-    client.connect(('my_server', 8000))
 
     # Make a file-like object out of the connection
     connection = client.makefile('wb')
