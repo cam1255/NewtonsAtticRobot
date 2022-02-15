@@ -1,11 +1,15 @@
 import socket
 import cv2
 import controller_util
-
+import zmq
+import base64
+import numpy as np
 IP = socket.gethostname()
 PORT = 4450
 print(IP)
 ADDR = (IP, PORT)
+
+
 def video_handler():
 
     # Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
@@ -20,14 +24,13 @@ def video_handler():
         while True:
             # Repeatedly read 1k of data from the connection and write it to
             # the media player's stdin
-            data = connection.read(1024)
-
-            if not data:
+            frame = server.recv(1024)
+            img = base64.b64decode(frame)
+            npimg = np.fromstring(img, dtype=np.uint8)
+            source = cv2.imdecode(npimg, 1)
+            if not frame:
                 break
-            g = open("Client.jpg", "wb")
-            g.write(data)
-            g.close()
-            cv2.imshow('Frame', "Client.jpg")
+            cv2.imshow('Frame', source)
 
     finally:
         connection.close()
