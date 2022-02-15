@@ -21,10 +21,13 @@ def video_handler():
             # Repeatedly read 1k of data from the connection and write it to
             # the media player's stdin
             data = connection.read(1024)
+
             if not data:
                 break
-            else:
-                cv2.imshow('Frame', data)
+            g = open("Client.jpg", "wb")
+            g.write(data)
+            g.close()
+            cv2.imshow('Frame', "Client.jpg")
 
     finally:
         connection.close()
