@@ -54,30 +54,35 @@ def video_reciever():
 
 def motor_handler():
     server = socket.socket()  # used IPV4 and TCP connection
-    server.bind(ADDR)
+    server.bind(ADDR2)
     server.listen(1)
     print("Waiting for connections")
     client, address = server.accept()
     print("New connection to", address)
     while True:
         client.send(bytes("Bruh", "utf-8"))
-        joy = controller_util.XboxController()
-
-        while True:
-            stick = joy.read()
-            stick_y = stick[1]
-            stick_x = stick[0]
-            Rtrigger = stick[2]
-            Ltrigger = stick[3]
-            FW_Amount = int(Rtrigger * 1000)
-            RV_Amount = int(Ltrigger * 1000 * -1)
-            Line_Amount = FW_Amount + RV_Amount
-            T_Amount = int(stick_x * 1000)
-            client.send(("MD: " + str(Line_Amount) + "\r\n").encode("UTF-8"))
+        try:
+            joy = controller_util.XboxController()
+            while True:
+                stick = joy.read()
+                stick_y = stick[1]
+                stick_x = stick[0]
+                Rtrigger = stick[2]
+                Ltrigger = stick[3]
+                FW_Amount = int(Rtrigger * 1000)
+                RV_Amount = int(Ltrigger * 1000 * -1)
+                Line_Amount = FW_Amount + RV_Amount
+                T_Amount = int(stick_x * 1000)
+                client.send(("MD: " + str(Line_Amount) + "\r\n").encode("UTF-8"))
+                check = client.recv(1024).decode()
+                client.send(("MT: " + str(T_Amount * -1) + "\r\n").encode("UTF-8"))
+                check = client.recv(1024).decode()
+                print(check)
+        finally:
+            client.send(("MD: " + str(500) + "\r\n").encode("UTF-8"))
             check = client.recv(1024).decode()
-            client.send(("MT: " + str(T_Amount * -1) + "\r\n").encode("UTF-8"))
+            client.send(("MT: " + str(500 * -1) + "\r\n").encode("UTF-8"))
             check = client.recv(1024).decode()
-            print(check)
 
 
 def client_handler():
