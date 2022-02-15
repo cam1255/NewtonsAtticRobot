@@ -43,7 +43,6 @@ def video_reciever():
             frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
             cv2.imshow('Robot Camera Stream', frame)
-
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
