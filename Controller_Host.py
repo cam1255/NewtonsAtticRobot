@@ -62,25 +62,29 @@ def motor_handler():
     while True:
         try:
             joy = controller_util.XboxController()
-            while True:
-                stick = joy.read()
-                stick_y = stick[1]
-                stick_x = stick[0]
-                Rtrigger = stick[2]
-                Ltrigger = stick[3]
-                FW_Amount = int(Rtrigger * 1000)
-                RV_Amount = int(Ltrigger * 1000 * -1)
-                Line_Amount = FW_Amount + RV_Amount
-                T_Amount = int(stick_x * 1000)
-                client.send(("MD: " + str(Line_Amount) + "\r\n").encode("UTF-8"))
-                check = client.recv(1024).decode()
-                client.send(("MT: " + str(T_Amount * -1) + "\r\n").encode("UTF-8"))
-                check = client.recv(1024).decode()
-                print(check)
-        except IndexError:
-            client.send(("MD: " + str(500) + "\r\n").encode("UTF-8"))
+            flag = True
+        finally:
+            flag = False
+
+        while flag:
+            stick = joy.read()
+            stick_y = stick[1]
+            stick_x = stick[0]
+            Rtrigger = stick[2]
+            Ltrigger = stick[3]
+            FW_Amount = int(Rtrigger * 1000)
+            RV_Amount = int(Ltrigger * 1000 * -1)
+            Line_Amount = FW_Amount + RV_Amount
+            T_Amount = int(stick_x * 1000)
+            client.send(("MD: " + str(Line_Amount) + "\r\n").encode("UTF-8"))
             check = client.recv(1024).decode()
-            client.send(("MT: " + str(500 * -1) + "\r\n").encode("UTF-8"))
+            client.send(("MT: " + str(T_Amount * -1) + "\r\n").encode("UTF-8"))
+            check = client.recv(1024).decode()
+
+        while not flag:
+            client.send(("MD: " + str(0) + "\r\n").encode("UTF-8"))
+            check = client.recv(1024).decode()
+            client.send(("MT: " + str(0 * -1) + "\r\n").encode("UTF-8"))
             check = client.recv(1024).decode()
 
 
@@ -90,11 +94,14 @@ def client_handler():
     t2 = Thread(target=video_reciever())
 
     # start the threads
-    t1.start()
     t2.start()
+    t1.start()
+
 
     # wait for the threads to complete
-    t1.join()
     t2.join()
+    t1.join()
+
+
 
 client_handler()
