@@ -6,16 +6,17 @@ import time
 IP = "DESKTOP-PN6HHCE"
 PORT = 4450
 
-
+ADDR = (IP, PORT)
 def test():
 
     # Connect a client socket to my_server:8000 (change my_server to the
     # hostname of your server)
-    client_socket = socket.socket()
-    client_socket.connect(('my_server', 8000))
+    client = socket.socket()
+    client.connect(ADDR)
+    client.connect(('my_server', 8000))
 
     # Make a file-like object out of the connection
-    connection = client_socket.makefile('wb')
+    connection = client.makefile('wb')
     try:
         with picamera.PiCamera() as camera:
             camera.resolution = (640, 480)
@@ -30,7 +31,7 @@ def test():
             camera.stop_recording()
     finally:
         connection.close()
-        client_socket.close()
+        client.close()
 
 
 def main():
@@ -39,11 +40,8 @@ def main():
     motor_port.write("MD: 0\r\n".encode("UTF-8"))
     motor_port.write("MT: 0\r\n".encode("UTF-8"))
 
-    ADDR = (IP, PORT)
-
     connected = False
     while True:
-        ADDR = (IP, PORT)
         client.connect(ADDR)
         print("Connected!")
         connected = True
