@@ -4,12 +4,14 @@ import controller_util
 import struct
 import numpy as np
 from threading import Thread
+import time
 
 IP = socket.gethostname()
 PORT = 4450
 ADDR = (IP, PORT)
 PORT2 = 4460
 ADDR2 = (IP, PORT2)
+
 
 def video_reciever():
     # Camera socket
@@ -18,8 +20,8 @@ def video_reciever():
     camS.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     # Listen for camera
-    camS.listen(1)
     print("Waiting for camera connection...")
+    camS.listen(1)
     camCon = camS.accept()[0]
     camFile = camCon.makefile("rb")
     print("Connection made with camera")
@@ -90,11 +92,13 @@ def motor_handler():
 
 def client_handler():
     # create two new threads
-    t1 = Thread(target=motor_handler())
-    t2 = Thread(target=video_reciever())
+    t2 = Thread(target=video_reciever)
+    t1 = Thread(target=motor_handler)
+
 
     # start the threads
     t2.start()
+    time.sleep(1)
     t1.start()
 
 

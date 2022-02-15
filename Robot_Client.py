@@ -78,8 +78,8 @@ def motor_driver():
 
 def main():
     # create two new threads
-    t1 = Thread(target=motor_driver())
-    t2 = Thread(target=video_recorder())
+    t1 = Thread(target=motor_driver)
+    t2 = Thread(target=video_recorder)
 
     # start the threads
     t2.start()
