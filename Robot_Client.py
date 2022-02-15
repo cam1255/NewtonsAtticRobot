@@ -1,7 +1,7 @@
 import socket, pickle,struct
 import serial
 import numpy as np
-from picamera import PiCamera
+import picamera
 import time
 IP = "DESKTOP-PN6HHCE"
 PORT = 4450
