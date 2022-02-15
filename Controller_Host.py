@@ -18,7 +18,7 @@ def video_reciever():
     camS.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     # Listen for camera
-    camS.listen(0)
+    camS.listen(1)
     print("Waiting for camera connection...")
     camCon = camS.accept()[0]
     camFile = camCon.makefile("rb")
@@ -53,9 +53,9 @@ def video_reciever():
 
 
 def motor_handler():
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # used IPV4 and TCP connection
+    server = socket.socket()  # used IPV4 and TCP connection
     server.bind(ADDR)
-    server.listen(0)
+    server.listen(1)
     print("Waiting for connections")
     client, address = server.accept()
     print("New connection to", address)
@@ -93,3 +93,4 @@ def client_handler():
     t1.join()
     t2.join()
 
+client_handler()

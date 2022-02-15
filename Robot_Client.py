@@ -13,7 +13,9 @@ PORT2 = 4460
 ADDR = (IP, PORT)
 ADDR2 = (IP, PORT2)
 
+
 def video_recorder():
+
     client_socket = socket.socket()
     client_socket.connect(ADDR)
     client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -62,6 +64,7 @@ def motor_driver():
 
     connected = False
     while True:
+        print("connecting...")
         client.connect(ADDR)
         print("Connected!")
         connected = True
