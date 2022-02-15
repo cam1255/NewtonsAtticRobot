@@ -1,9 +1,9 @@
 import socket
 import cv2
 import controller_util
-import zmq
-import base64
+import struct
 import numpy as np
+
 IP = socket.gethostname()
 PORT = 4450
 print(IP)
@@ -11,30 +11,46 @@ ADDR = (IP, PORT)
 
 
 def video_handler():
+    # Camera socket
+    camS = socket.socket()
+    camS.bind(ADDR)
 
-    # Start a socket listening for connections on 0.0.0.0:8000 (0.0.0.0 means
-    # all interfaces)
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # used IPV4 and TCP connection
-    server.bind(ADDR)
-    server.listen(3)
+    camS.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
-    # Accept a single connection and make a file-like object out of it
-    connection = server.accept()[0].makefile('rb')
+    # Listen for camera
+    camS.listen(0)
+    print("Waiting for camera connection...")
+
+    camCon = camS.accept()[0]
+    camFile = camCon.makefile("rb")
+    print("Connection made with camera")
+
+    camS.settimeout(0.00001)
+
+    numOfBytes = struct.calcsize("<L")
+
     try:
-        while True:
-            # Repeatedly read 1k of data from the connection and write it to
-            # the media player's stdin
-            frame = server.recv(1024)
-            img = base64.b64decode(frame)
-            npimg = np.fromstring(img, dtype=np.uint8)
-            source = cv2.imdecode(npimg, 1)
-            if not frame:
+        while (True):
+            camS.setblocking(False)
+
+            imageLength = struct.unpack("<L", camFile.read(numOfBytes))[0]
+
+            if imageLength == 0:
                 break
-            cv2.imshow('Frame', source)
+
+            nparr = np.frombuffer(camFile.read(imageLength), np.uint8)
+            frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+            cv2.imshow('RC Car Video stream', frame)
+
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
     finally:
-        connection.close()
-        server.close()
+        camFile.close()
+        camS.close()
+        cv2.destroyAllWindows()
+        print("Server - Camera connection closed")
 
 
 def client_handler():

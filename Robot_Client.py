@@ -1,33 +1,52 @@
-import socket, pickle,struct
 import serial
-import numpy as np
 import picamera
+import io
+import socket
+import struct
 import time
+
 IP = "DESKTOP-PN6HHCE"
 PORT = 4450
 
 ADDR = (IP, PORT)
 def test():
+    client_socket = socket.socket()
+    client_socket.connect(ADDR)
+    client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    connection = client_socket.makefile('wb')
 
-    # Connect a client socket to my_server:8000 (change my_server to the
-    # hostname of your server)
-    client = socket.socket()
-    client.connect(ADDR)
+    class SplitFrames(object):
+        def __init__(self, connection):
+            self.connection = connection
+            self.stream = io.BytesIO()
 
-    # Make a file-like object out of the connection
-    connection = client.makefile('wb')
+        def write(self, buf):
+            if buf.startswith(b'\xff\xd8'):
+                size = self.stream.tell()
+                if size > 0:
+                    self.connection.write(struct.pack('<L', size))
+                    self.connection.flush()
+                    self.stream.seek(0)
+                    self.connection.write(self.stream.read(size))
+                    self.stream.seek(0)
+
+            self.stream.write(buf)
+
     try:
-        with picamera.PiCamera() as camera:
-            camera.resolution = (640, 480)
-            camera.framerate = 24
-            # Start recording, sending the output to the connection for 60
-            # seconds, then stop
-            camera.start_recording(connection, format='h264')
-            camera.wait_recording(60)
+        output = SplitFrames(connection)
+        with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
+            time.sleep(2)
+            camera.rotation = 180
+            camera.start_recording(output, format='mjpeg')
+            camera.wait_recording(2000)
             camera.stop_recording()
+            # Write the terminating 0-length to the connection to let the
+            # server know we're done
+            connection.write(struct.pack('<L', 0))
     finally:
         connection.close()
-        client.close()
+        client_socket.close()
+        print("Client - Connection closed")
 
 
 def main():
