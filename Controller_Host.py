@@ -92,19 +92,18 @@ def motor_handler():
 
 def client_handler():
     # create two new threads
-    t2 = Thread(target=video_reciever)
-    t1 = Thread(target=motor_handler)
 
+    t1 = Thread(target=motor_handler)
+    t2 = Thread(target=video_reciever)
 
     # start the threads
-    t2.start()
-    time.sleep(1)
     t1.start()
+    t2.start()
 
 
     # wait for the threads to complete
-    t2.join()
     t1.join()
+    t2.join()
 
 
 

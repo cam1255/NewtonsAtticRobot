@@ -82,12 +82,12 @@ def main():
     t2 = Thread(target=video_recorder)
 
     # start the threads
-    t2.start()
     t1.start()
+    t2.start()
 
     # wait for the threads to complete
-    t2.join()
     t1.join()
+    t2.join()
 
 
 
