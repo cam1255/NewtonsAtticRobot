@@ -4,7 +4,7 @@ import controller_util
 import struct
 import numpy as np
 from threading import Thread
-import time
+import keyboard
 
 IP = socket.gethostname()
 PORT = 4450
@@ -84,9 +84,21 @@ def motor_handler():
             check = client.recv(1024).decode()
 
         while not flag:
-            client.send(("MD: " + str(0) + "\r\n").encode("UTF-8"))
+            if keyboard.is_pressed("w"):
+                val = 500
+            else:
+                val = 0
+            if keyboard.is_pressed("s"):
+                val = -500
+            if keyboard.is_pressed("a"):
+                turn = 500
+            elif keyboard.is_pressed("d"):
+                turn = -500
+            else:
+                turn = 0
+            client.send(("MD: " + str(val) + "\r\n").encode("UTF-8"))
             check = client.recv(1024).decode()
-            client.send(("MT: " + str(0 * -1) + "\r\n").encode("UTF-8"))
+            client.send(("MT: " + str(turn) + "\r\n").encode("UTF-8"))
             check = client.recv(1024).decode()
 
 
