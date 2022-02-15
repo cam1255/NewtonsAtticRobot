@@ -78,7 +78,7 @@ def motor_handler():
                 client.send(("MT: " + str(T_Amount * -1) + "\r\n").encode("UTF-8"))
                 check = client.recv(1024).decode()
                 print(check)
-        finally:
+        except IndexError:
             client.send(("MD: " + str(500) + "\r\n").encode("UTF-8"))
             check = client.recv(1024).decode()
             client.send(("MT: " + str(500 * -1) + "\r\n").encode("UTF-8"))

@@ -64,8 +64,6 @@ def motor_driver():
 
     connected = False
     while True:
-        print("connecting...")
-        client.connect(ADDR)
         print("Connected!")
         connected = True
         check_msg = bytes("Recieved", "utf-8")
