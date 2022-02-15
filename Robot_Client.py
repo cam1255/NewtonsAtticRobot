@@ -4,12 +4,16 @@ import io
 import socket
 import struct
 import time
+from threading import Thread
 
 IP = "DESKTOP-PN6HHCE"
 PORT = 4450
+PORT2 = 4460
 
 ADDR = (IP, PORT)
-def test():
+ADDR2 = (IP, PORT2)
+
+def video_recorder():
     client_socket = socket.socket()
     client_socket.connect(ADDR)
     client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -49,8 +53,9 @@ def test():
         print("Client - Connection closed")
 
 
-def main():
+def motor_driver():
     client = socket.socket()
+    client.connect(ADDR2)
     motor_port = serial.Serial("/dev/ttyS0", 9600, 8)
     motor_port.write("MD: 0\r\n".encode("UTF-8"))
     motor_port.write("MT: 0\r\n".encode("UTF-8"))
@@ -70,4 +75,19 @@ def main():
             client.send(check_msg)
 
 
-test()
+def main():
+    # create two new threads
+    t1 = Thread(target=motor_driver())
+    t2 = Thread(target=video_recorder())
+
+    # start the threads
+    t1.start()
+    t2.start()
+
+    # wait for the threads to complete
+    t1.join()
+    t2.join()
+
+
+
+main()
