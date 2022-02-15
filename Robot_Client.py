@@ -68,10 +68,10 @@ def motor_driver():
         connected = True
         check_msg = bytes("Recieved", "utf-8")
         while True:
-            msg = client.recv(1024).decode()
+            msg = client.recv(1024)
             motor_port.write(msg)
             client.send(check_msg)
-            msg = client.recv(1024).decode()
+            msg = client.recv(1024)
             motor_port.write(msg)
             client.send(check_msg)
 

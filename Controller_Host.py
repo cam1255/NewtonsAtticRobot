@@ -60,7 +60,6 @@ def motor_handler():
     client, address = server.accept()
     print("New connection to", address)
     while True:
-        client.send(bytes("Bruh", "utf-8"))
         try:
             joy = controller_util.XboxController()
             while True:
