@@ -3,7 +3,7 @@ import serial
 import numpy as np
 from picamera import PiCamera
 import time
-IP = "192.168.254.71"
+IP = "DESKTOP-PN6HHCE"
 PORT = 4450
 
 
