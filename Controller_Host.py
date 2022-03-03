@@ -12,27 +12,28 @@ ADDR = (IP, PORT)
 PORT2 = 4460
 ADDR2 = (IP, PORT2)
 
-
+print(ADDR)
+print(ADDR2)
 def video_reciever():
     # Camera socket
-    camS = socket.socket()
-    camS.bind(ADDR)
-    camS.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+    cameraSocket = socket.socket()
+    cameraSocket.bind(ADDR)
+    cameraSocket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     # Listen for camera
     print("Waiting for camera connection...")
-    camS.listen(1)
-    camCon = camS.accept()[0]
-    camFile = camCon.makefile("rb")
+    cameraSocket.listen(1)
+    camConnection =    cameraSocket.accept()[0]
+    camFile = camConnection.makefile("rb")
     print("Connection made with camera")
 
-    camS.settimeout(0.00001)
+    cameraSocket.settimeout(0.00001)
 
     numOfBytes = struct.calcsize("<L")
 
     try:
         while (True):
-            camS.setblocking(False)
+            cameraSocket.setblocking(False)
 
             imageLength = struct.unpack("<L", camFile.read(numOfBytes))[0]
 
@@ -41,14 +42,14 @@ def video_reciever():
 
             nparr = np.frombuffer(camFile.read(imageLength), np.uint8)
             frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
+            frame = rotate_image(frame, 180)
             cv2.imshow('Robot Camera Stream', frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
     finally:
         camFile.close()
-        camS.close()
+        cameraSocket.close()
         cv2.destroyAllWindows()
         print("Server - Camera connection closed")
 
@@ -100,6 +101,12 @@ def motor_handler():
             client.send(("MT: " + str(turn) + "\r\n").encode("UTF-8"))
             check = client.recv(1024).decode()
 
+
+def rotate_image(image, angle):
+  image_center = tuple(np.array(image.shape[1::-1]) / 2)
+  rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+  result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+  return result
 
 def client_handler():
     # create two new threads
