@@ -11,9 +11,9 @@ from PIL import ImageTk, Image
 PORT = 4450  # each socket will need to be through a different port\
 PORT2 = 4451
 IP = socket.gethostname()
-ADDR2 = (IP, PORT)
+ADDR = (IP, PORT)
 # ADDR = socket.getaddrinfo(IP, PORT2)[0] # tuple containing the full address for the sockets
-ADDR = (IP, PORT2)
+ADDR2 = (IP, PORT2)
 
 
 
@@ -143,22 +143,19 @@ def client_handler():
 
     # create two new threads
     t1 = Thread(target=motor_handler)
-    t2 = Thread(target=video_receiver)
+    #t2 = Thread(target=video_receiver)
 
     # start the threads
     t1.start()
-    t2.start()
+    #t2.start()
 
     # wait for the threads to complete
     t1.join()
-    t2.join()
+    #t2.join()
 
 
 
     # function for video streaming
-
-
-    video_stream()
     root.mainloop()
 
 client_handler()

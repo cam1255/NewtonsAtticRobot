@@ -8,7 +8,7 @@ from threading import Thread
 
 IP = "DESKTOP-PN6HHCE"
 PORT = 4450
-PORT2 = 4460
+PORT2 = 4451
 
 ADDR = (IP, PORT)
 ADDR2 = (IP, PORT2)
@@ -78,16 +78,17 @@ def motor_driver():
 
 def main():
     # create two new threads
-    t1 = Thread(target=motor_driver)
-    t2 = Thread(target=video_recorder)
+    t1 = Thread(target=video_recorder)
+    # t2 = Thread(target=motor_driver)
+
 
     # start the threads
     t1.start()
-    t2.start()
+    # t2.start()
 
     # wait for the threads to complete
     t1.join()
-    t2.join()
+    # t2.join()
 
 
 main()
