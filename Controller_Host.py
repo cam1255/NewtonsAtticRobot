@@ -6,24 +6,30 @@ import numpy as np
 from threading import Thread
 import keyboard
 
-IP = socket.gethostname()
-PORT = 4450
-ADDR = (IP, PORT)
-PORT2 = 4460
-ADDR2 = (IP, PORT2)
+PORT = 4450  # each socket will need to be through a different port\
+PORT2 = 9401
+IP = socket.gethostname()  # this may have to change
+IP = socket.gethostbyname(IP)
+ADDR2 = socket.getaddrinfo(IP, PORT)[0]
+IPT = " 172.58.5.109"
+# ADDR = socket.getaddrinfo(IP, PORT2)[0] # tuple containing the full address for the sockets
+ADDR = (IPT, PORT2)
 
-print(ADDR)
-print(ADDR2)
-def video_reciever():
+
+
+# this is the receive and display function for the front camera
+def video_receiver():
+
     # Camera socket
     cameraSocket = socket.socket()
+    print(ADDR)
     cameraSocket.bind(ADDR)
     cameraSocket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     # Listen for camera
     print("Waiting for camera connection...")
     cameraSocket.listen(1)
-    camConnection =    cameraSocket.accept()[0]
+    camConnection = cameraSocket.accept()[0]
     camFile = camConnection.makefile("rb")
     print("Connection made with camera")
 
@@ -32,7 +38,7 @@ def video_reciever():
     numOfBytes = struct.calcsize("<L")
 
     try:
-        while (True):
+        while True:
             cameraSocket.setblocking(False)
 
             imageLength = struct.unpack("<L", camFile.read(numOfBytes))[0]
@@ -54,6 +60,7 @@ def video_reciever():
         print("Server - Camera connection closed")
 
 
+# this is the controller logic for user input
 def motor_handler():
     server = socket.socket()  # used IPV4 and TCP connection
     server.bind(ADDR2)
@@ -102,27 +109,28 @@ def motor_handler():
             check = client.recv(1024).decode()
 
 
+# this function rotates the image by the specified angle in degrees
 def rotate_image(image, angle):
-  image_center = tuple(np.array(image.shape[1::-1]) / 2)
-  rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-  result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
-  return result
+    image_center = tuple(np.array(image.shape[1::-1]) / 2)
+    rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+    result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+    return result
 
+
+# this is the controller host main function, it creates the various threads for the program
 def client_handler():
-    # create two new threads
 
-    t1 = Thread(target=motor_handler)
-    t2 = Thread(target=video_reciever)
+    # create two new threads
+    # t1 = Thread(target=motor_handler)
+    t2 = Thread(target=video_receiver)
 
     # start the threads
-    t1.start()
+    # t1.start()
     t2.start()
 
-
     # wait for the threads to complete
-    t1.join()
+    # t1.join()
     t2.join()
-
 
 
 client_handler()

@@ -66,7 +66,7 @@ def motor_driver():
     while True:
         print("Connected!")
         connected = True
-        check_msg = bytes("Recieved", "utf-8")
+        check_msg = bytes("Received", "utf-8")
         while True:
             msg = client.recv(1024)
             motor_port.write(msg)
@@ -88,5 +88,6 @@ def main():
     # wait for the threads to complete
     t1.join()
     t2.join()
+
 
 main()
