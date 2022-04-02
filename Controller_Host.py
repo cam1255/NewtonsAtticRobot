@@ -5,15 +5,30 @@ import struct
 import numpy as np
 from threading import Thread
 import keyboard
+from tkinter import *
+from PIL import ImageTk, Image
 
 PORT = 4450  # each socket will need to be through a different port\
-PORT2 = 9401
-IP = socket.gethostname()  # this may have to change
-IP = socket.gethostbyname(IP)
-ADDR2 = socket.getaddrinfo(IP, PORT)[0]
-IPT = " 172.58.5.109"
+PORT2 = 4451
+IP = socket.gethostname()
+ADDR2 = (IP, PORT)
 # ADDR = socket.getaddrinfo(IP, PORT2)[0] # tuple containing the full address for the sockets
-ADDR = (IPT, PORT2)
+ADDR = (IP, PORT2)
+
+
+
+root = Tk()
+root.title("Video Feed Window")
+# root.resizable(False, False)
+
+root.state('zoomed')
+
+# Create a frame
+app = Frame(root, bg="white", padx=15, pady=15)
+app.grid()
+# Create a label in the frame
+lmain = Label(app)
+lmain.grid()
 
 
 
@@ -49,7 +64,7 @@ def video_receiver():
             nparr = np.frombuffer(camFile.read(imageLength), np.uint8)
             frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
             frame = rotate_image(frame, 180)
-            cv2.imshow('Robot Camera Stream', frame)
+            video_stream(frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -116,21 +131,34 @@ def rotate_image(image, angle):
     result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
     return result
 
-
+def video_stream(frame):
+    cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+    img = Image.fromarray(cv2image)
+    imgtk = ImageTk.PhotoImage(image=img)
+    lmain.imgtk = imgtk
+    lmain.configure(image=imgtk)
+    lmain.after(1, video_stream)
 # this is the controller host main function, it creates the various threads for the program
 def client_handler():
 
     # create two new threads
-    # t1 = Thread(target=motor_handler)
+    t1 = Thread(target=motor_handler)
     t2 = Thread(target=video_receiver)
 
     # start the threads
-    # t1.start()
+    t1.start()
     t2.start()
 
     # wait for the threads to complete
-    # t1.join()
+    t1.join()
     t2.join()
 
+
+
+    # function for video streaming
+
+
+    video_stream()
+    root.mainloop()
 
 client_handler()
