@@ -116,8 +116,8 @@ def main():
     enter_button.pack(fill='x', expand=True, pady=5, padx=60)
     root.mainloop()
     global ADDR, ADDR2
-    ADDR = (ip_address, PORT)
-    ADDR2 = (ip_address, PORT2)
+    ADDR = (ip_address.get(), PORT)
+    ADDR2 = (ip_address.get(), PORT2)
     client = motor_connect()
     client_socket = video_connect()
 

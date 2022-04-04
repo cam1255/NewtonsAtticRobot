@@ -40,7 +40,7 @@ def video_receiver():
 
     # Camera socket
     cameraSocket = socket.socket()
-    print(ADDR)
+
     cameraSocket.bind(ADDR)
     cameraSocket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
@@ -77,6 +77,7 @@ def motor_handler():
     server.bind(ADDR2)
     server.listen(1)
     print("Waiting for connections")
+    print(ADDR)
     client, address = server.accept()
     print("New connection to", address)
     return client
