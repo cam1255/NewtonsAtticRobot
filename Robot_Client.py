@@ -114,6 +114,7 @@ def main():
     # Confirm button
     enter_button = ttk.Button(signin, text="Confirm", command=confirm_clicked)
     enter_button.pack(fill='x', expand=True, pady=5, padx=60)
+    root.mainloop()
     global ADDR, ADDR2
     ADDR = (ip_address, PORT)
     ADDR2 = (ip_address, PORT2)
