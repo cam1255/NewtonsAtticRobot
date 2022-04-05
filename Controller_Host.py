@@ -3,12 +3,15 @@ import cv2
 import struct
 import numpy as np
 import tkinter as tk
+from PIL import ImageTk, Image
 
 PORT = 4450  # each socket will need to be through a different port\
 PORT2 = 4451
+PORT3 = 4452
 IP = socket.gethostname()
 ADDR = (IP, PORT)
 ADDR2 = (IP, PORT2)
+ADDR3 = (IP, PORT3)
 cascPath = "haarcascade_frontalface_default.xml"
 faceCascade = cv2.CascadeClassifier(cascPath)
 
@@ -21,27 +24,28 @@ root.state('zoomed')
 root.configure(bg='black')
 # Create a frame
 app = tk.Frame(root, bg="white", padx=15, pady=15, borderwidth=0)
-app2 = tk.Frame(root, bg="black", padx=100, pady=100, borderwidth=0)
+app2 = tk.Frame(root, bg="black", padx=1, pady=1, borderwidth=0)
 app3 = tk.Frame(root, bg="black", padx=1, pady=1, borderwidth=0)
-# app4 = tk.Frame(root, bg="blue", padx=1, pady=1, borderwidth=0)
-# app5 = tk.Frame(root, bg="red", padx=1, pady=1, borderwidth=0)
+app4 = tk.Frame(root, bg="blue", padx=1, pady=1, borderwidth=0)
+app5 = tk.Frame(root, bg="red", padx=1, pady=1, borderwidth=0)
 app.grid(row=0,column=0)
 app2.grid(row=0,column=1)
 app3.grid(row=1,column=0)
-# app4.grid(row=1,column=1)
-# app5.grid(row=1,column=2)
+app4.grid(row=0,column=2)
+app5.grid(row=2,column=0)
 # Create a label in the frame
 linstruct = tk.Label(app3, borderwidth=0)
 lsub = tk.Label(app2, borderwidth=0)
 lmain = tk.Label(app, borderwidth=0)
-# lscan = tk.Label(app4, borderwidth=0)
-# limg = tk.Label(app5,borderwidth=0)
+lcompass = tk.Label(app4, borderwidth=0)
+limg = tk.Label(app5,borderwidth=0)
 
 lmain.grid(row=0,column=0)
 lsub.grid(row=0,column=1)
 linstruct.grid(row=1,column=0)
-# lscan.grid(row=1,column=1)
-# limg.grid(row=1,column=2)
+lcompass.grid(row=0,column=2)
+limg.grid(row=2,column=0)
+
 
 # this is the receive and display function for the front camera
 def video_receiver():
@@ -67,17 +71,26 @@ def video_receiver():
 
 def cam_run(cameraSocket, camFile, numOfBytes):
     cameraSocket.setblocking(False)
-
+    global current_frame
     imageLength = struct.unpack("<L", camFile.read(numOfBytes))[0]
     nparr = np.frombuffer(camFile.read(imageLength), np.uint8)
 
     frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    frame = rotate_image(frame, 180)
-
+    current_frame = frame
+    frame = img_scale(frame, 250)
     video_stream(frame)
     root.after(5, cam_run,cameraSocket, camFile, numOfBytes)
 
 
+def img_scale(frame, scale_percent):
+  # percent of original size
+    width = int(frame.shape[1] * scale_percent / 100)
+    height = int(frame.shape[0] * scale_percent / 100)
+    dim = (width, height)
+
+    # resize image
+    frame_new = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+    return frame_new
 # this is the controller logic for user input
 def motor_handler():
     server = socket.socket()  # used IPV4 and TCP connection
@@ -160,21 +173,55 @@ def face_box(frame):
         flags=cv2.CASCADE_SCALE_IMAGE
 
     )
+    detected = False
     # Draw a rectangle around the faces
     for (x, y, w, h) in faces:
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-    return frame
+        detected = True
+    return frame, detected
 
 
-def game_scan(frame):
-    frame = face_box(frame)
+def game_scan(frame, points_array):
+    frame = img_scale(frame, 150)
+    frame, detected = face_box(frame)
+    if detected:
+        points_array[0] += 1
     height, width = frame.shape[:2]
     ppm_header = f'P6 {width} {height} 255 '.encode()
     data = ppm_header + cv2.cvtColor(frame, cv2.COLOR_BGR2RGB).tobytes()
     imgtk = tk.PhotoImage(width=width, height=height, data=data, format='PPM')
-    # limg.imgtk = imgtk
-    # limg.configure(image=imgtk)
+    limg.imgtk = imgtk
+    limg.configure(image=imgtk)
+    New_txt = tk.Text(linstruct, height=1, width=10)
+    text = "SCORE: " + str(points_array[0])
+    T = tk.Text(linstruct, height=3, width=95)
+    text_help = "Use WASD. W is forward, S reverse, A is rotate left, D is rotate right. The slider is for speedRecommended below 500"
+    New_txt.grid(row=5, column=1)
+    T.grid(row=4, column=1)
+    New_txt.insert(tk.END, text)
+    T.insert(tk.END, text_help)
+    T.config(state='disabled')
+    New_txt.config(state='disabled')
 
+
+def compass_run(client, image):
+    print(client.recv(1024).decode())
+    imageR = rotate_image(image, 20)
+    height, width = imageR.shape[:2]
+    ppm_header = f'P6 {width} {height} 255 '.encode()
+    data = ppm_header + cv2.cvtColor(imageR, cv2.COLOR_BGR2RGB).tobytes()
+    imgtk = tk.PhotoImage(width=width, height=height, data=data, format='PPM')
+    lcompass.imgtk = imgtk
+    lcompass.configure(image=imgtk)
+
+    root.after(1000, compass_run, client, image)
+
+def compass_connect():
+    server = socket.socket()  # used IPV4 and TCP connection
+    server.bind(ADDR3)
+    server.listen(1)
+    client, address = server.accept()
+    return client
 # this is the controller host main function, it creates the various threads for the program
 def client_handler():
     sizex = 10
@@ -183,26 +230,30 @@ def client_handler():
     posy = 1
     client = motor_handler()
     netList = video_receiver()
+    compass_client = compass_connect()
+    points_array = [0]
 
     SP = tk.Scale(lsub, from_=1000, to=300)
     FW = tk.Button(lsub, text="W", width=sizex, height= sizey,command= lambda: forward(client, SP))
     L = tk.Button(lsub, text="A",width=sizex, height= sizey,  command=lambda: left(client, SP))
     R = tk.Button(lsub, text="D",width=sizex, height= sizey,  command=lambda: right(client, SP))
     B = tk.Button(lsub, text="S",width=sizex, height= sizey,  command=lambda: back(client, SP))
-    Scan = tk.Button(lsub, text="Scan", width=sizex, height=sizey, command=lambda: game_scan(current_frame))
+    Scan = tk.Button(lsub, text="Scan", width=sizex, height=sizey, command=lambda: game_scan(current_frame, points_array))
     T = tk.Text(linstruct, height=3, width=95)
     text_help = "Use WASD. W is forward, S reverse, A is rotate left, D is rotate right. The slider is for speed. Recommended below 500"
     FW.bind('<ButtonRelease-1>', stop(client, SP))
 
-    root.after(1, cam_run, netList[0], netList[1], netList[2])
+    image = cv2.imread("Compass_Rose.jpg")
 
+    root.after(1, cam_run, netList[0], netList[1], netList[2])
+    root.after(1000, compass_run, compass_client, image)
     FW.grid(row=posx,column=posy)
     B.grid(row=posx+1,column=posy)
     L.grid(row=posx+1,column=posy-1)
     R.grid(row=posx+1,column=posy+1)
     SP.grid(row=posx+1,column=posy+2)
-    T.grid(row=posx+3,column=posy)
     Scan.grid(row=posx+2,column=posy)
+    T.grid(row=posx + 3, column=posy)
     T.insert(tk.END, text_help)
     root.bind('w', lambda eff: forward(client, SP))
 
