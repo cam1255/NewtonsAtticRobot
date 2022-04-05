@@ -156,8 +156,8 @@ def compass_handler(client):
         if (heading < 0):  # Ensure the angle is positive
             heading = heading + 2 * pi
 
-        userHeadingAngle = int(heading * (180 / pi))  # converting into the heading angle
-        client.send(userHeadingAngle)
+        userHeadingAngle = str(heading * (180 / pi))  # converting into the heading angle
+        client.send(userHeadingAngle.encode('utf-8'))
 
         time.sleep(0.01)  # sets a short wait before re-looping
 
