@@ -189,7 +189,7 @@ def main():
     # create two new threads
     t1 = Thread(target=video_recorder, args=(client_socket,))
     t2 = Thread(target=motor_driver, args=(client,))
-    t3 = Thread(target=compass_handler, args=(client,))
+    t3 = Thread(target=compass_handler, args=(compass_socket,))
 
 
 

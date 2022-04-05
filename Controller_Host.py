@@ -205,7 +205,7 @@ def game_scan(frame, points_array):
 
 
 def compass_run(client, image):
-    print(client.recv(1024).decode())
+    print(client.recv(1024))
     imageR = rotate_image(image, 20)
     height, width = imageR.shape[:2]
     ppm_header = f'P6 {width} {height} 255 '.encode()
