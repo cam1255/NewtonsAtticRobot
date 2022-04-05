@@ -61,6 +61,7 @@ def video_recorder(client_socket):
         with picamera.PiCamera(resolution='VGA', framerate=30) as camera:
             time.sleep(2)
             camera.rotation = 180
+            camera.resolution = (640, 480)
             camera.start_recording(output, format='mjpeg')
             camera.wait_recording(2000)
             camera.stop_recording()
