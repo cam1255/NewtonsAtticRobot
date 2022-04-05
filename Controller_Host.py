@@ -24,27 +24,30 @@ root.state('zoomed')
 root.configure(bg='black')
 # Create a frame
 app = tk.Frame(root, bg="white", padx=15, pady=15, borderwidth=0)
-app2 = tk.Frame(root, bg="black", padx=1, pady=1, borderwidth=0)
-app3 = tk.Frame(root, bg="black", padx=1, pady=1, borderwidth=0)
-app4 = tk.Frame(root, bg="blue", padx=1, pady=1, borderwidth=0)
+app2 = tk.Frame(root, bg="white", padx=1, pady=1, borderwidth=0)
+app3 = tk.Frame(root, bg="white", padx=1, pady=1, borderwidth=0)
+app4 = tk.Frame(root, bg="black", padx=0, pady=0, borderwidth=0)
 app5 = tk.Frame(root, bg="red", padx=1, pady=1, borderwidth=0)
+app6 = tk.Frame(root, bg="black", padx=0, pady=0, borderwidth=0)
 app.grid(row=0,column=0)
 app2.grid(row=0,column=1)
 app3.grid(row=1,column=0)
-app4.grid(row=0,column=2)
-app5.grid(row=2,column=0)
+app4.grid(row=2,column=1)
+app5.grid(row=0,column=2)
+app6.grid(row=1,column=1)
 # Create a label in the frame
 linstruct = tk.Label(app3, borderwidth=0)
 lsub = tk.Label(app2, borderwidth=0)
 lmain = tk.Label(app, borderwidth=0)
 lcompass = tk.Label(app4, borderwidth=0)
 limg = tk.Label(app5,borderwidth=0)
-
+lpoint = tk.Label(app6, borderwidth=0)
 lmain.grid(row=0,column=0)
 lsub.grid(row=0,column=1)
 linstruct.grid(row=1,column=0)
-lcompass.grid(row=0,column=2)
+lcompass.grid(row=2,column=1)
 limg.grid(row=2,column=0)
+lpoint.grid(row=1,column=1)
 
 
 # this is the receive and display function for the front camera
@@ -205,16 +208,18 @@ def game_scan(frame, points_array):
 
 
 def compass_run(client, image):
-    print(client.recv(1024).decode())
-    imageR = rotate_image(image, 20)
-    height, width = imageR.shape[:2]
-    ppm_header = f'P6 {width} {height} 255 '.encode()
-    data = ppm_header + cv2.cvtColor(imageR, cv2.COLOR_BGR2RGB).tobytes()
-    imgtk = tk.PhotoImage(width=width, height=height, data=data, format='PPM')
-    lcompass.imgtk = imgtk
-    lcompass.configure(image=imgtk)
+    num = int(client.recv(512).decode())
+    if num <360:
+        imageR = rotate_image(image, num)
+        height, width = imageR.shape[:2]
+        ppm_header = f'P6 {width} {height} 255 '.encode()
+        data = ppm_header + cv2.cvtColor(imageR, cv2.COLOR_BGR2RGB).tobytes()
+        imgtk = tk.PhotoImage(width=width, height=height, data=data, format='PPM')
+        lcompass.imgtk = imgtk
+        lcompass.configure(image=imgtk)
 
-    root.after(1000, compass_run, client, image)
+    root.after(100, compass_run, client, image)
+
 
 def compass_connect():
     server = socket.socket()  # used IPV4 and TCP connection
@@ -223,6 +228,14 @@ def compass_connect():
     client, address = server.accept()
     return client
 # this is the controller host main function, it creates the various threads for the program
+
+def compass_point(img):
+    height, width = img.shape[:2]
+    ppm_header = f'P6 {width} {height} 255 '.encode()
+    data = ppm_header + cv2.cvtColor(img, cv2.COLOR_BGR2RGB).tobytes()
+    imgtk = tk.PhotoImage(width=width, height=height, data=data, format='PPM')
+    lpoint.imgtk = imgtk
+    lpoint.configure(image=imgtk)
 def client_handler():
     sizex = 10
     sizey =6
@@ -243,10 +256,11 @@ def client_handler():
     text_help = "Use WASD. W is forward, S reverse, A is rotate left, D is rotate right. The slider is for speed. Recommended below 500"
     FW.bind('<ButtonRelease-1>', stop(client, SP))
 
-    image = cv2.imread("Compass_Rose.jpg")
-
+    image = cv2.imread("Compass_Rose.png")
+    image2 = cv2.imread("Compass_Arrow_Image.png")
+    compass_point(image2)
     root.after(1, cam_run, netList[0], netList[1], netList[2])
-    root.after(1000, compass_run, compass_client, image)
+    root.after(100, compass_run, compass_client, image)
     FW.grid(row=posx,column=posy)
     B.grid(row=posx+1,column=posy)
     L.grid(row=posx+1,column=posy-1)
@@ -256,7 +270,6 @@ def client_handler():
     T.grid(row=posx + 3, column=posy)
     T.insert(tk.END, text_help)
     root.bind('w', lambda eff: forward(client, SP))
-
     root.bind('d', lambda eff: right(client, SP))
     root.bind('a', lambda eff: left(client, SP))
     root.bind('s', lambda eff: back(client, SP))

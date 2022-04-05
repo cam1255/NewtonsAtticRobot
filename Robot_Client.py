@@ -118,7 +118,7 @@ def motor_driver(client):
 def MagnetometerInit():  # initial Configuration Code
     bus.write_byte_data(deviceAddress, RegA, 0x01)  # configuring Register A
     bus.write_byte_data(deviceAddress, RegB, 0x1D)  # configuring Register B
-    # bus.write_byte_data(deviceAddress, ModoRegistro, 0) #only necessary if DRDY is plugged in
+
 
 def read_raw_data(addr):
     low = bus.read_byte_data(deviceAddress, addr)  # read the low and high address that holds compass data
@@ -137,7 +137,6 @@ def compass_connect():
 def compass_handler(client):
 
     MagnetometerInit()  # start of main
-    print("Calculating Heading Angle...")
 
     while True:
         regAddress = bus.read_byte_data(deviceAddress, RegStatus)  # grabbing the address that will hold data
@@ -157,11 +156,11 @@ def compass_handler(client):
             heading = heading + 2 * pi
 
         userHeadingAngle = int(heading * (180 / pi))  # converting into the heading angle
-        print("Current Heading Angle = %d°" % userHeadingAngle)
+
         string_to_send = "%d" % userHeadingAngle
         client.send(string_to_send.encode('utf-8'))
 
-        time.sleep(0.01)  # sets a short wait before re-looping
+        time.sleep(0.1)  # sets a short wait before re-looping
 
 def main():
     # Entry frame
