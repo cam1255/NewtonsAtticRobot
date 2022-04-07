@@ -115,6 +115,8 @@ def motor_driver(client):
             msg = client.recv(1024)
             motor_port.write(msg)
             client.send(check_msg)
+
+
 def MagnetometerInit():  # initial Configuration Code
     bus.write_byte_data(deviceAddress, RegA, 0x01)  # configuring Register A
     bus.write_byte_data(deviceAddress, RegB, 0x1D)  # configuring Register B
@@ -129,10 +131,13 @@ def read_raw_data(addr):
     if (inputValue > 32768):  # grabs the angle and its sign (+/-)
         inputValue = inputValue - 65536
     return inputValue  # returns a value between
+
+
 def compass_connect():
         compass_socket = socket.socket()
         compass_socket.connect(ADDR3)
         return compass_socket
+
 
 def compass_handler(client):
 
@@ -192,17 +197,20 @@ def main():
     t2 = Thread(target=motor_driver, args=(client,))
     t3 = Thread(target=compass_handler, args=(compass_socket,))
 
+    try:
+        # start the threads
+        t1.start()
+        t2.start()
+        t3.start()
 
-
-    # start the threads
-    t1.start()
-    t2.start()
-    t3.start()
-
-    # wait for the threads to complete
-    t1.join()
-    t2.join()
-    t3.join()
+        # wait for the threads to complete
+        t1.join()
+        t2.join()
+        t3.join()
+    except Exception:
+        motor_port = serial.Serial("/dev/ttyACM0", 9600, 8)
+        motor_port.write("MD: 0\r\n".encode("UTF-8"))
+        motor_port.write("MT: 0\r\n".encode("UTF-8"))
 
 
 main()
