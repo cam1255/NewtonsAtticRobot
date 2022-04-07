@@ -117,9 +117,16 @@ def motor_driver(client):
                 motor_port.write(msg)
                 client.send(check_msg)
     except ConnectionResetError:
-        motor_port.write("MD: 0\r\n".encode("UTF-8"))
-        motor_port.write("MT: 0\r\n".encode("UTF-8"))
-
+        try:
+            motor_port.write("MD: 0\r\n".encode("UTF-8"))
+            motor_port.write("MT: 0\r\n".encode("UTF-8"))
+        except BrokenPipeError:
+            try:
+                motor_port.write("MD: 0\r\n".encode("UTF-8"))
+                motor_port.write("MT: 0\r\n".encode("UTF-8"))
+            except:
+                motor_port.write("MD: 0\r\n".encode("UTF-8"))
+                motor_port.write("MT: 0\r\n".encode("UTF-8"))
 
 def MagnetometerInit():  # initial Configuration Code
     bus.write_byte_data(deviceAddress, RegA, 0x01)  # configuring Register A
