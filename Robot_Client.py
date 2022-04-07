@@ -104,17 +104,21 @@ def motor_driver(client):
     motor_port.write("MT: 0\r\n".encode("UTF-8"))
 
     connected = False
-    while True:
-
-        connected = True
-        check_msg = bytes("Received", "utf-8")
+    try:
         while True:
-            msg = client.recv(1024)
-            motor_port.write(msg)
-            client.send(check_msg)
-            msg = client.recv(1024)
-            motor_port.write(msg)
-            client.send(check_msg)
+
+            connected = True
+            check_msg = bytes("Received", "utf-8")
+            while True:
+                msg = client.recv(1024)
+                motor_port.write(msg)
+                client.send(check_msg)
+                msg = client.recv(1024)
+                motor_port.write(msg)
+                client.send(check_msg)
+    except ConnectionResetError:
+        motor_port.write("MD: 0\r\n".encode("UTF-8"))
+        motor_port.write("MT: 0\r\n".encode("UTF-8"))
 
 
 def MagnetometerInit():  # initial Configuration Code
@@ -197,20 +201,16 @@ def main():
     t2 = Thread(target=motor_driver, args=(client,))
     t3 = Thread(target=compass_handler, args=(compass_socket,))
 
-    try:
-        # start the threads
-        t1.start()
-        t2.start()
-        t3.start()
+    # start the threads
+    t1.start()
+    t2.start()
+    t3.start()
 
-        # wait for the threads to complete
-        t1.join()
-        t2.join()
-        t3.join()
-    except ConnectionResetError:
-        motor_port = serial.Serial("/dev/ttyACM0", 9600, 8)
-        motor_port.write("MD: 0\r\n".encode("UTF-8"))
-        motor_port.write("MT: 0\r\n".encode("UTF-8"))
+    # wait for the threads to complete
+    t1.join()
+    t2.join()
+    t3.join()
+
 
 
 main()
