@@ -207,7 +207,7 @@ def main():
         t1.join()
         t2.join()
         t3.join()
-    except Exception:
+    except ConnectionResetError:
         motor_port = serial.Serial("/dev/ttyACM0", 9600, 8)
         motor_port.write("MD: 0\r\n".encode("UTF-8"))
         motor_port.write("MT: 0\r\n".encode("UTF-8"))
