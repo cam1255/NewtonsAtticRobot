@@ -3,15 +3,16 @@ import cv2
 import struct
 import numpy as np
 import tkinter as tk
+from tkinter import ttk
 from PIL import ImageTk, Image
 
 PORT = 4450  # each socket will need to be through a different port\
 PORT2 = 4451
 PORT3 = 4452
 IP = socket.gethostname()
-ADDR = (IP, PORT)
-ADDR2 = (IP, PORT2)
-ADDR3 = (IP, PORT3)
+global ADDR
+global ADDR2
+global ADDR3
 cascPath = "haarcascade_frontalface_default.xml"
 faceCascade = cv2.CascadeClassifier(cascPath)
 
@@ -52,6 +53,7 @@ lpoint.grid(row=1,column=1)
 
 # this is the receive and display function for the front camera
 def video_receiver():
+    global ADDR
 
     # Camera socket
     cameraSocket = socket.socket()
@@ -96,6 +98,8 @@ def img_scale(frame, scale_percent):
     return frame_new
 # this is the controller logic for user input
 def motor_handler():
+    global ADDR2
+
     server = socket.socket()  # used IPV4 and TCP connection
     server.bind(ADDR2)
     server.listen(1)
@@ -222,12 +226,13 @@ def compass_run(client, image):
 
 
 def compass_connect():
+    global ADDR3
     server = socket.socket()  # used IPV4 and TCP connection
     server.bind(ADDR3)
     server.listen(1)
     client, address = server.accept()
     return client
-# this is the controller host main function, it creates the various threads for the program
+
 
 def compass_point(img):
     height, width = img.shape[:2]
@@ -236,11 +241,25 @@ def compass_point(img):
     imgtk = tk.PhotoImage(width=width, height=height, data=data, format='PPM')
     lpoint.imgtk = imgtk
     lpoint.configure(image=imgtk)
+
+
+def get_ip():
+    global ADDR
+    global ADDR2
+    global ADDR3
+    ip_address = IP
+    ADDR = (ip_address, PORT)
+    ADDR2 = (ip_address, PORT2)
+    ADDR3 = (ip_address, PORT3)
+
 def client_handler():
     sizex = 10
     sizey =6
     posx = 1
     posy = 1
+
+    get_ip()
+
     client = motor_handler()
     netList = video_receiver()
     compass_client = compass_connect()
@@ -274,6 +293,7 @@ def client_handler():
     root.bind('a', lambda eff: left(client, SP))
     root.bind('s', lambda eff: back(client, SP))
     root.bind("<KeyRelease>", lambda eff: stop(client, SP))
+
     root.mainloop()
 
 
