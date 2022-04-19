@@ -1,4 +1,4 @@
-# NewtownsAtticRobot
+# Newton's Attic Robot
 This is the repository for the Autonomous Delivery Solutions remotely controlled rover.
 
 This repository is for use with git.
